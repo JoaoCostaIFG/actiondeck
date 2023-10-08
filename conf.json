@@ -1,23 +1,23 @@
 {
   "rows": 3,
   "cols": 4,
-  "bg": "#000000",
-  "fg": "#FFFFFF",
+  "bg": "#1e293b",
+  "fg": "#f1f5f9",
   "actions": [
     {
       "row": 0,
       "col": 0,
       "bg": "#000000",
-      "fg": "#FFFFFF",
+      "fg": "#f1f5f9",
       "name": "Test button",
       "icon": "microsoft",
-      "cmd": "ls-la"
+      "cmd": "alacritty -e newsboat"
     },
     {
       "row": 1,
       "col": 3,
       "bg": "#000000",
-      "fg": "#FFFFFF",
+      "fg": "#f1f5f9",
       "name": "st",
       "icon": "coffee",
       "cmd": "alacritty"
