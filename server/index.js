@@ -1,22 +1,114 @@
 import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
 import express from "express";
-import {fileURLToPath} from 'url';
 
-const PORT = process.env.PORT || 8500;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const app = express();
+const PORT = process.env.PORT || 8500;
+const CONF = process.env.CONF || "./conf.json";
 
-app.use(express.static(path.resolve(__dirname, '../client/dist')));
+class Config {
+  rows = 0;
+  cols = 0;
+  bg = "#000000";
+  fg = "#FFFFFF";
+  actions = [];
 
-app.get("/api", (req, res) => {
-  res.json({ message: "Hello from server!" });
-});
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(__dirname, '../client/dist', 'index.html'));
-});
+  constructor(rows, cols, bg, fg) {
+    this.rows = rows;
+    this.cols = cols;
+    this.bg = bg;
+    this.fg = fg;
 
-app.listen(PORT, () => {
-  console.log(`Server listening on ${PORT}`);
-});
+    this.actions = new Array(rows * cols);
+  }
+
+  addAction(col, row, bg, fg, name, icon, cmd) {
+    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) {
+      throw new Error("Invalid position");
+    }
+    const id = row * this.cols + col;
+    const action = new Action(id, bg, fg, name, icon, cmd);
+    this.actions[id] = action;
+  }
+}
+
+class Action {
+  constructor(id, bg, fg, name, icon, cmd) {
+    this.id = id;
+    this.bg = bg;
+    this.fg = fg;
+    this.name = name;
+    this.icon = icon;
+    this.cmd = cmd;
+  }
+}
+
+function readConfig() {
+  const configObj = JSON.parse(
+    fs.readFileSync(CONF, { encoding: "utf8", flag: "r" }),
+  );
+  const newConfig = new Config(
+    configObj.rows,
+    configObj.cols,
+    configObj.bg,
+    configObj.fg,
+  );
+  for (const action of configObj.actions) {
+    newConfig.addAction(
+      action.col,
+      action.row,
+      action.bg,
+      action.fg,
+      action.name,
+      action.icon,
+      action.cmd,
+    );
+  }
+  return newConfig;
+}
+
+function main() {
+  fs.watchFile(CONF, (_curr, _prev) => {
+    try {
+      const newConfig = readConfig();
+      config = newConfig;
+      console.log("Config reloaded");
+    } catch (err) {
+      console.error(err);
+    }
+  });
+
+  const app = express();
+
+  app.use(express.static(path.resolve(__dirname, "../client/dist")));
+
+  app.get("/api", (_req, res) => {
+    res.json({ message: "Hello from server!" });
+  });
+  app.get("/api/config", (_req, res) => {
+    res.json(config);
+  });
+  app.get("/api/actions", (_req, res) => {
+    res.json(config.actions);
+  });
+
+  app.get("*", (_req, res) => {
+    res.sendFile(path.resolve(__dirname, "../client/dist", "index.html"));
+  });
+
+  app.listen(PORT, () => {
+    console.log(`Server listening on ${PORT}`);
+  });
+}
+
+let config;
+try {
+  config = readConfig();
+} catch (err) {
+  console.error(err);
+  process.exit(1);
+}
+main();

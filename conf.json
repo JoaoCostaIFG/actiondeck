@@ -1,0 +1,26 @@
+{
+  "rows": 3,
+  "cols": 4,
+  "bg": "#000000",
+  "fg": "#FFFFFF",
+  "actions": [
+    {
+      "row": 0,
+      "col": 0,
+      "bg": "#000000",
+      "fg": "#FFFFFF",
+      "name": "Test button",
+      "icon": "B",
+      "cmd": "ls -la"
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "bg": "#000000",
+      "fg": "#FFFFFF",
+      "name": "Test button",
+      "icon": "B",
+      "cmd": "ls -la"
+    }
+  ]
+}
