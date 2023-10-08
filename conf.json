@@ -10,17 +10,17 @@
       "bg": "#000000",
       "fg": "#FFFFFF",
       "name": "Test button",
-      "icon": "B",
-      "cmd": "ls -la"
+      "icon": "microsoft",
+      "cmd": "ls-la"
     },
     {
       "row": 1,
       "col": 3,
       "bg": "#000000",
       "fg": "#FFFFFF",
-      "name": "Test button",
-      "icon": "B",
-      "cmd": "ls -la"
+      "name": "st",
+      "icon": "coffee",
+      "cmd": "alacritty"
     }
   ]
 }

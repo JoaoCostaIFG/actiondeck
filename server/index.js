@@ -1,72 +1,15 @@
 import path from "path";
 import fs from "fs";
-import exec from "child_process";
 import { fileURLToPath } from "url";
 import express from "express";
+import cors from "cors";
+import { Config } from "./config.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 8500;
 const CONF = process.env.CONF || "./conf.json";
-
-class Config {
-  rows = 0;
-  cols = 0;
-  bg = "#000000";
-  fg = "#FFFFFF";
-  actions = [];
-
-  constructor(rows, cols, bg, fg) {
-    this.rows = rows;
-    this.cols = cols;
-    this.bg = bg;
-    this.fg = fg;
-
-    this.actions = new Array(rows * cols);
-  }
-
-  addAction(col, row, bg, fg, name, icon, cmd) {
-    if (col < 0 || col >= this.cols || row < 0 || row >= this.rows) {
-      throw new Error("Invalid position");
-    }
-    const id = row * this.cols + col;
-    const action = new Action(id, bg, fg, name, icon, cmd);
-    this.actions[id] = action;
-  }
-
-  getAction(id) {
-    if (id < 0 || id >= this.actions.length) {
-      throw new Error("Invalid id");
-    }
-    return this.actions[id];
-  }
-}
-
-class Action {
-  constructor(id, bg, fg, name, icon, cmd) {
-    this.id = id;
-    this.bg = bg;
-    this.fg = fg;
-    this.name = name;
-    this.icon = icon;
-    this.cmd = cmd;
-  }
-
-  execute() {
-    exec.exec(this.cmd, (error, stdout, stderr) => {
-      if (error) {
-          console.log(`error: ${error.message}`);
-          return;
-      }
-      if (stderr) {
-          console.log(`stderr: ${stderr}`);
-          return;
-      }
-      console.log(`stdout: ${stdout}`);
-    });
-  }
-}
 
 function readConfig() {
   const configObj = JSON.parse(
@@ -104,6 +47,7 @@ function main() {
   });
 
   const app = express();
+  app.use(cors());
 
   app.use(express.static(path.resolve(__dirname, "../client/dist")));
 
@@ -122,8 +66,8 @@ function main() {
       action.execute();
       res.json({ message: "Success" });
     } catch (err) {
-      console.error(err);
-      res.status(500).send(err.message);
+      console.error(err.message);
+      res.status(500).json({ message: err.message });
     }
   });
 
