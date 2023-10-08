@@ -1,5 +1,6 @@
 import path from "path";
 import fs from "fs";
+import exec from "child_process";
 import { fileURLToPath } from "url";
 import express from "express";
 
@@ -33,6 +34,13 @@ class Config {
     const action = new Action(id, bg, fg, name, icon, cmd);
     this.actions[id] = action;
   }
+
+  getAction(id) {
+    if (id < 0 || id >= this.actions.length) {
+      throw new Error("Invalid id");
+    }
+    return this.actions[id];
+  }
 }
 
 class Action {
@@ -43,6 +51,20 @@ class Action {
     this.name = name;
     this.icon = icon;
     this.cmd = cmd;
+  }
+
+  execute() {
+    exec.exec(this.cmd, (error, stdout, stderr) => {
+      if (error) {
+          console.log(`error: ${error.message}`);
+          return;
+      }
+      if (stderr) {
+          console.log(`stderr: ${stderr}`);
+          return;
+      }
+      console.log(`stdout: ${stdout}`);
+    });
   }
 }
 
@@ -93,6 +115,16 @@ function main() {
   });
   app.get("/api/actions", (_req, res) => {
     res.json(config.actions);
+  });
+  app.get("/api/execute/:id", (req, res) => {
+    try {
+      const action = config.getAction(req.params.id);
+      action.execute();
+      res.json({ message: "Success" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).send(err.message);
+    }
   });
 
   app.get("*", (_req, res) => {
