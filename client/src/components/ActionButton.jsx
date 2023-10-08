@@ -14,6 +14,11 @@ export default class ActionButton extends React.Component {
   execute() {
     if (this.state.isDisabled) return;
     console.log(`Executing ${this.state.cmd}`);
+    fetch("/api")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log(data);
+      });
   }
 
   render() {
