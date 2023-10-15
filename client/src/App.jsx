@@ -1,24 +1,19 @@
 import ActionButton from './components/ActionButton'
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Color from 'color';
 
 const defaultBg = "#1e293b";
 const defaultFg = "#f1f5f9";
 
-class App extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      rows: 0,
-      cols: 0,
-      actions: [],
-      fg: Color(this.props.fg ?? defaultFg),
-      bg: Color(this.props.bg ?? defaultBg),
-    };
-  }
+function App(props) {
+  const [rows, setRows] = useState(0);
+  const [cols, setCols] = useState(0);
+  const [actions, setActions] = useState([]);
+  const [fg, setFg] = useState(Color(defaultFg));
+  const [bg, setBg] = useState(Color(defaultBg));
 
-  setConfig(config) {
-    const actions = [];
+  const setConfig = (config) => {
+    const newActions = [];
     let idx = 0;
     config.actions.forEach(aData => {
       let action;
@@ -28,45 +23,40 @@ class App extends React.Component {
       } else {
         action = <ActionButton key={aData.id} id={aData.id} name={aData.name} icon={aData.icon} fg={aData.fg} bg={aData.bg} />;
       }
-      actions.push(action);
+      newActions.push(action);
       ++idx;
     });
 
-    this.setState({
-      rows: config.rows,
-      cols: config.cols,
-      actions: actions,
-      fg: Color(config.fg ?? defaultFg),
-      bg: Color(config.bg ?? defaultBg),
-    });
+    setRows(config.rows);
+    setCols(config.cols);
+    setActions(newActions);
+    setFg(new Color(config.fg));
+    setBg(new Color(config.bg));
   }
 
-  componentDidMount() {
+  useEffect(() => {
     fetch("/api/config")
       .then(async (res) => {
         const config = await res.json();
-        this.setConfig(config)
+        setConfig(config)
       })
       .catch((err) => console.error(err));
-  }
+  }, []);
 
-  render() {
-    const ret = (
-      <div className="App m-0 text-center" style={{backgroundColor: this.state.bg.hex(), color: this.state.fg.hex()}}>
-        <div
-          className="App-actions h-screen p-2 md:p-4 lg:p-10 grid gap-1 md:gap-4 lg:gap-8 items-center justify-items-center"
-          style={{
-            gridTemplateColumns: `repeat(${this.state.cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${this.state.rows}, minmax(0, 1fr))`,
-          }}
-        >
-          {this.state.actions}
-        </div>
+  return (
+    <div className="App m-0 text-center" style={{backgroundColor: bg.hex(), color: fg.hex()}}>
+      <div
+        className="App-actions h-screen p-2 md:p-4 lg:p-10 grid gap-1 md:gap-4 lg:gap-8 items-center justify-items-center"
+        style={{
+          gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+          gridTemplateRows: `repeat(${rows}, minmax(0, 1fr))`,
+        }}
+      >
+        {actions}
       </div>
-    );
-
-    return ret;
-  }
+    </div>
+  );
 }
+
 
 export default App;
