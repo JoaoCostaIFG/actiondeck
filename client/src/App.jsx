@@ -1,5 +1,6 @@
 import ActionButton from './components/ActionButton'
 import React, { useState, useEffect } from "react";
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 import Color from 'color';
 
 const defaultBg = "#1e293b";
@@ -11,6 +12,23 @@ function App(props) {
   const [actions, setActions] = useState([]);
   const [fg, setFg] = useState(Color(defaultFg));
   const [bg, setBg] = useState(Color(defaultBg));
+
+  const { sendMessage, lastMessage, readyState } =
+    useWebSocket(`ws://${window.location.hostname}:${import.meta.env.VITE_SERVER_PORT ?? window.location.port}`, {
+      onOpen: () => console.log('Opened WS to server'),
+      //Will attempt to reconnect on all close events, such as server shutting down
+      shouldReconnect: (_closeEvent) => true,
+    });
+  useEffect(() => {
+    if (lastMessage !== null) {
+      console.log("got message at " + lastMessage.timeStamp)
+      console.log("content: " + lastMessage.data)
+    }
+  }, [lastMessage]);
+
+  useEffect(() => {
+    console.log("state: " + readyState)
+  }, [readyState]);
 
   const setConfig = (config) => {
     const newActions = [];
@@ -44,7 +62,7 @@ function App(props) {
   }, []);
 
   return (
-    <div className="App m-0 text-center" style={{backgroundColor: bg.hex(), color: fg.hex()}}>
+    <div className="App m-0 text-center" style={{ backgroundColor: bg.hex(), color: fg.hex() }}>
       <div
         className="App-actions h-screen p-2 md:p-4 lg:p-10 grid gap-1 md:gap-4 lg:gap-8 items-center justify-items-center"
         style={{

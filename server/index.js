@@ -1,7 +1,9 @@
+import 'dotenv/config'
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import express from "express";
+import { WebSocketServer, WebSocket } from "ws";
 import cors from "cors";
 import { Config } from "./config.js";
 
@@ -36,21 +38,10 @@ function readConfig() {
 }
 
 function main() {
-  fs.watchFile(CONF, (_curr, _prev) => {
-    try {
-      const newConfig = readConfig();
-      config = newConfig;
-      console.log("Config reloaded");
-    } catch (err) {
-      console.error(err);
-    }
-  });
-
   const app = express();
   app.use(cors());
 
-  app.use(express.static(path.resolve(__dirname, "../client/dist")));
-
+  // API endpoints
   app.get("/api", (_req, res) => {
     res.json({ message: "Hello from server!" });
   });
@@ -71,12 +62,39 @@ function main() {
     }
   });
 
+  // frontend endpoints
+  app.use(express.static(path.resolve(__dirname, "../client/dist")));
   app.get("*", (_req, res) => {
     res.sendFile(path.resolve(__dirname, "../client/dist", "index.html"));
   });
 
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
+  });
+
+  const wss = new WebSocketServer({ server });
+  wss.on('connection', (ws) => {
+    ws.on('error', console.error);
+
+    ws.on('message', function message(data) {
+      console.log('received: %s', data);
+    });
+  });
+
+  fs.watchFile(CONF, (_curr, _prev) => {
+    try {
+      const newConfig = readConfig();
+      config = newConfig;
+      const configString = JSON.stringify(config);
+      wss.clients.forEach((client) => {
+        if (client.readyState === WebSocket.OPEN) {
+          client.send(configString, { binary: false });
+        }
+      });
+      console.log("Config reloaded");
+    } catch (err) {
+      console.error(err);
+    }
   });
 }
 
