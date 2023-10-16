@@ -19,30 +19,13 @@ function App(props) {
       //Will attempt to reconnect on all close events, such as server shutting down
       shouldReconnect: (_closeEvent) => true,
     });
-  useEffect(() => {
-    if (lastMessage !== null) {
-      console.log("got message at " + lastMessage.timeStamp)
-      console.log("content: " + lastMessage.data)
-    }
-  }, [lastMessage]);
-
-  useEffect(() => {
-    console.log("state: " + readyState)
-  }, [readyState]);
 
   const setConfig = (config) => {
-    const newActions = [];
-    let idx = 0;
-    config.actions.forEach(aData => {
-      let action;
+    const newActions = config.actions.map((aData, idx) => {
       if (aData === null) {
-        const id = -(idx + config.rows * config.cols);
-        action = <ActionButton key={id} id={id} />;
-      } else {
-        action = <ActionButton key={aData.id} id={aData.id} name={aData.name} icon={aData.icon} fg={aData.fg} bg={aData.bg} />;
+        return <ActionButton key={idx} id={idx} isDisabled={true} />;
       }
-      newActions.push(action);
-      ++idx;
+      return <ActionButton key={aData.id} id={aData.id} isDisabled={false} name={aData.name} icon={aData.icon} fg={aData.fg} bg={aData.bg} />;
     });
 
     setRows(config.rows);
@@ -51,6 +34,13 @@ function App(props) {
     setFg(new Color(config.fg));
     setBg(new Color(config.bg));
   }
+
+  useEffect(() => {
+    if (lastMessage !== null) {
+      setConfig(JSON.parse(lastMessage.data));
+    }
+  }, [lastMessage]);
+
 
   useEffect(() => {
     fetch("/api/config")
